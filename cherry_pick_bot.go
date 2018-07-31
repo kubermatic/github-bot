@@ -30,6 +30,9 @@ func main() {
 		}
 
 		logger.Infof("Got %d notifications!", len(unreadNotifications))
+		for _, unreadNotification := range unreadNotifications {
+			logger.Infof("Notification:\n---\n%+v\n---\n", unreadNotification)
+		}
 
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
