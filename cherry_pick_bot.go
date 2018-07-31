@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/adtac/cherry-pick-bot/pkg/controller"
+
 	"github.com/op/go-logging"
 )
 
@@ -23,6 +25,8 @@ func main() {
 	ctx, client := authenticate()
 
 	logger.Notice("Ready for action!")
+
+	controller := controller.New(client)
 
 	for true {
 		unreadNotifications, err := getUnreadNotifications(client, ctx)
@@ -42,7 +46,7 @@ func main() {
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
 		for _, notification := range unreadNotifications {
-			if err := handleNotification(notification); err != nil {
+			if err := controller.HandleNotification(notification); err != nil {
 				logger.Infof("Failed to handle notification: %v", err)
 			}
 			login, project, prId, err := extractNotification(notification)
