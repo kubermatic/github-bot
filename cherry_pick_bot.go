@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"time"
 
 	"github.com/op/go-logging"
@@ -33,7 +33,7 @@ func main() {
 
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
-		for _, notification := range(unreadNotifications) {
+		for _, notification := range unreadNotifications {
 			login, project, prId, err := extractNotification(notification)
 			if err != nil {
 				die(fmt.Errorf("error while extracting notification data: %v", err))

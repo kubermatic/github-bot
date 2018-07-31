@@ -41,12 +41,12 @@ func loadEnvironment() {
 	m["GITHUB_EMAIL"] = &conf.Email
 	m["PRIVATE_KEY"] = &conf.PrivateKey
 
-	for key, val := range(m) {
+	for key, val := range m {
 		varVal, present := os.LookupEnv(key)
 		if present {
 			*val = varVal
 		}
 	}
 
-	os.Setenv("GIT_SSH_COMMAND", "ssh -i " + conf.PrivateKey)
+	os.Setenv("GIT_SSH_COMMAND", "ssh -i "+conf.PrivateKey)
 }

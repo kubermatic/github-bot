@@ -1,13 +1,13 @@
 package main
 
 import (
-    "errors"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/context"
 	"github.com/google/go-github/github"
+	"golang.org/x/net/context"
 )
 
 func getMentions(client *github.Client, ctx context.Context, login string, project string, prId int) ([]*github.IssueComment, error) {
@@ -17,8 +17,8 @@ func getMentions(client *github.Client, ctx context.Context, login string, proje
 	}
 
 	res := make([]*github.IssueComment, 0)
-	for _, comment := range(comments) {
-		if strings.Contains(*comment.Body, "@" + conf.GithubLogin) {
+	for _, comment := range comments {
+		if strings.Contains(*comment.Body, "@"+conf.GithubLogin) {
 			res = append(res, comment)
 		}
 	}
@@ -32,9 +32,9 @@ func getLastUserMentioned(client *github.Client, ctx context.Context, login stri
 		return nil, err
 	}
 
-    if len(mentions) == 0 {
-        return nil, errors.New("zero mentions")
-    }
+	if len(mentions) == 0 {
+		return nil, errors.New("zero mentions")
+	}
 
 	lastUser, _, err := client.Users.Get(ctx, *mentions[len(mentions)-1].User.Login)
 	if err != nil {
@@ -70,7 +70,7 @@ func extractNotification(notification *github.Notification) (login string, proje
 
 func getOpenPullRequest(client *github.Client, ctx context.Context, login string, project string) (result *github.PullRequest) {
 	prs, _, _ := client.PullRequests.List(ctx, login, project, &github.PullRequestListOptions{})
-	for _, pr := range(prs) {
+	for _, pr := range prs {
 		if *pr.User.Login == "cherry-pick-bot" {
 			result = pr
 		}
@@ -81,7 +81,7 @@ func getOpenPullRequest(client *github.Client, ctx context.Context, login string
 
 func getUnreadNotifications(client *github.Client, ctx context.Context) ([]*github.Notification, error) {
 	notifications, resp, err := client.Activity.ListNotifications(
-			ctx, &github.NotificationListOptions{All: true})
+		ctx, &github.NotificationListOptions{All: true})
 
 	if err != nil {
 		return nil, err
@@ -90,14 +90,13 @@ func getUnreadNotifications(client *github.Client, ctx context.Context) ([]*gith
 	}
 
 	unreadNotifications := make([]*github.Notification, 0)
-	for _, notification := range(notifications) {
+	for _, notification := range notifications {
 		if notification.GetUnread() {
 			unreadNotifications = append(unreadNotifications, notification)
 		}
 	}
 	return unreadNotifications, nil
 }
-
 
 func performCherryPick(client *github.Client, ctx context.Context, login string, project string, prId int) error {
 	// fetch the PR (the branch actually)
