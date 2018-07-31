@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"time"
@@ -31,12 +32,19 @@ func main() {
 
 		logger.Infof("Got %d notifications!", len(unreadNotifications))
 		for _, unreadNotification := range unreadNotifications {
-			logger.Infof("Notification:\n---\n%+v\n---\n", unreadNotification)
+			if serializedMsg, err := json.Marshal(unreadNotification); err == nil {
+				logger.Infof("Serialized notification:\n---\n%s\n---\n", string(serializedMsg))
+			} else {
+				logger.Infof("Failed to serialize message: %v", err)
+			}
 		}
 
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
 		for _, notification := range unreadNotifications {
+			if err := handleNotification(notification); err != nil {
+				logger.Infof("Failed to handle notification: %v", err)
+			}
 			login, project, prId, err := extractNotification(notification)
 			if err != nil {
 				die(fmt.Errorf("error while extracting notification data: %v", err))
