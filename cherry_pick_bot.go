@@ -70,14 +70,14 @@ func main() {
 				logger.Infof("Performing cherry pick for %s/%s #%d ...", login, project, prId)
 				err = performCherryPick(client, ctx, login, project, prId)
 				if err != nil {
-					logger.Error(err)
+					logger.Error(err.Error())
 					continue
 				}
 
 				logger.Info("Creating pull request ...", login, project, prId)
 				err = createCherryPR(client, ctx, login, project, prId)
 				if err != nil {
-					logger.Error(err)
+					logger.Error(err.Error())
 					continue
 				}
 			}
