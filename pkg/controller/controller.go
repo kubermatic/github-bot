@@ -2,12 +2,17 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
+)
+
+const (
+	cherryPickCommandName = "/cherry-pick"
 )
 
 type Controller struct {
@@ -32,11 +37,69 @@ func (c *Controller) HandleNotification(notification *github.Notification) error
 		return err
 	}
 	log.Printf("Got message body: %s", body)
+
+	labelsToEnsure := getLabelsToEnsureFromMessage(body)
+	prNumber, err := getIDFromUrl(notification.Subject.GetURL())
+	if err != nil {
+		return fmt.Errorf("failed to extract pr number from url: %v", err)
+	}
+	if err := c.ensureIssueLabelsExist(ctx, *notification.Repository, prNumber, labelsToEnsure); err != nil {
+		return fmt.Errorf("failed to ensure labels: %v", err)
+	}
+	return nil
+}
+
+// For the labels part we have to treat it as an issue, because PRs do not have Labels in this lib
+func (c *Controller) ensureIssueLabelsExist(ctx context.Context, repo github.Repository, id int, labels []string) error {
+	currentLabels, _, err := c.client.Issues.ListLabelsByIssue(ctx, repo.GetOwner().GetLogin(), repo.GetName(), id, nil)
+	if err != nil {
+		fmt.Errorf("failed to fetch labels for issue %s: %v", repo.GetURL(), err)
+	}
+
+	for _, desiredLabel := range labels {
+		if !labelSliceContains(currentLabels, desiredLabel) {
+			// AddLabelsToIssue(ctx context.Context, owner string, repo string, number int, labels []string) ([]*Label, *Response, error)
+			newLabels, _, err := c.client.Issues.AddLabelsToIssue(ctx, repo.GetOwner().GetLogin(), repo.GetName(), id, []string{desiredLabel})
+			if err != nil {
+				return fmt.Errorf("failed to add label %s on issue %s#%v: %v", desiredLabel, repo.GetURL(), id, err)
+			}
+			log.Printf("Successfully added label %s on issue %s#%v", desiredLabel, repo.GetURL(), id)
+			currentLabels = newLabels
+		}
+	}
+	return nil
+}
+
+func labelSliceContains(slice []*github.Label, s string) bool {
+	for _, element := range slice {
+		if element.GetName() == s {
+			return true
+		}
+	}
+	return false
+}
+
+func getLabelsToEnsureFromMessage(message string) []string {
+	var labels []string
+	if cherryPickCommandTarget := getCommandTarget(message, cherryPickCommandName); cherryPickCommandTarget != nil {
+		labels = append(labels, fmt.Sprintf("cherry-pick/%s", *cherryPickCommandTarget))
+	}
+
+	return labels
+}
+
+func getCommandTarget(message, command string) *string {
+	words := strings.Fields(message)
+	for idx, word := range words {
+		if word == cherryPickCommandName && len(message) >= idx {
+			return &words[idx+1]
+		}
+	}
 	return nil
 }
 
 func (c *Controller) getComment(ctx context.Context, repo github.Repository, commentUrl string) (string, error) {
-	commentID, err := getCommentIDFromCommentUrl(commentUrl)
+	commentID, err := getIDFromUrl(commentUrl)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +111,7 @@ func (c *Controller) getComment(ctx context.Context, repo github.Repository, com
 	return repoComment.GetBody(), nil
 }
 
-func getCommentIDFromCommentUrl(commentUrl string) (int, error) {
+func getIDFromUrl(commentUrl string) (int, error) {
 	commentURLSplitted := strings.Split(commentUrl, "/")
 	commentIDAsString := commentURLSplitted[len(commentURLSplitted)-1]
 	return strconv.Atoi(commentIDAsString)
