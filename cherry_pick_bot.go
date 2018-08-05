@@ -49,53 +49,6 @@ func main() {
 		//TODO: only mark processed notifications as read
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
-		for _, notification := range unreadNotifications {
-			login, project, prId, err := extractNotification(notification)
-			if err != nil {
-				die(fmt.Errorf("error while extracting notification data: %v", err))
-			}
-
-			changeRepo(login, project)
-
-			if *notification.Reason == "mention" {
-				// check if email is public
-				lastUser, err := getLastUserMentioned(client, ctx, login, project, prId)
-
-				if err != nil {
-					logger.Infof("error while getting mentioner: %v", err)
-				}
-
-				userName := *lastUser.Login
-
-				logger.Infof("Got a call from %s on %s/%s #%d", userName, login, project, prId)
-
-				if lastUser.Email == nil {
-					logger.Infof("%s email isn't public.. Skipping...", userName)
-					comment(client, ctx, login, project, prId, invalidEmail)
-					continue
-				}
-
-				// spoof the cherry-pick committer to make it look like the person commenting
-				// did it; also clear any ongoing rebases or cherry-picks
-				spoofUser(lastUser)
-				clear()
-
-				logger.Infof("Performing cherry pick for %s/%s #%d ...", login, project, prId)
-				err = performCherryPick(client, ctx, login, project, prId)
-				if err != nil {
-					logger.Error(err.Error())
-					continue
-				}
-
-				logger.Info("Creating pull request ...", login, project, prId)
-				err = createCherryPR(client, ctx, login, project, prId)
-				if err != nil {
-					logger.Error(err.Error())
-					continue
-				}
-			}
-		}
-
 		logger.Info("Sleeping ...")
 		time.Sleep(time.Duration(conf.SleepTime.Nanoseconds()))
 	}
