@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/adtac/cherry-pick-bot/pkg/git"
 
+	"github.com/golang/glog"
 	"github.com/google/go-github/github"
 )
 
@@ -17,7 +17,7 @@ func (c *Controller) syncCherryPicks(ctx context.Context, repo github.Repository
 		return fmt.Errorf("failed to fetch pr: %v", err)
 	}
 	if !pr.GetMerged() {
-		log.Printf("PR not merged, nothing to do...")
+		glog.V(6).Infoln("PR not merged, nothing to do...")
 		return nil
 	}
 	labels, _, err := c.client.Issues.ListLabelsByIssue(ctx, repo.GetOwner().GetLogin(), repo.GetName(), id, nil)
@@ -26,16 +26,16 @@ func (c *Controller) syncCherryPicks(ctx context.Context, repo github.Repository
 	}
 
 	for _, label := range labels {
-		log.Printf("Checking if label %s requires action", label.GetName())
+		glog.V(6).Infof("Checking if label %s requires action", label.GetName())
 		if strings.HasPrefix(label.GetName(), cherryPickLabelPrefix) {
-			log.Printf("Creating cherry-pick for label %s", label.String())
+			glog.Infof("Creating cherry-pick for label %s", label.String())
 			if err := c.createCherryPick(ctx, repo, *pr, label.GetName()); err != nil {
 				return fmt.Errorf("failed to create cherry pick: %v", err)
 			}
 		}
 	}
 
-	log.Println("Successfully finished processing cherry-picks")
+	glog.V(6).Infoln("Successfully finished processing cherry-picks")
 	return nil
 }
 

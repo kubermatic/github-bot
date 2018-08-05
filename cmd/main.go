@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -13,22 +11,16 @@ import (
 
 	"github.com/adtac/cherry-pick-bot/pkg/controller"
 
+	"github.com/golang/glog"
 	"github.com/google/go-github/github"
-	"github.com/op/go-logging"
 )
-
-var configPath = flag.String("config", "config.toml", "Path for the config file")
-
-var logger = logging.MustGetLogger("cherry-pick-bot")
 
 func main() {
 	githubToken := os.Getenv("GITHUB_ACCESS_TOKEN")
 	if githubToken == "" {
-		log.Fatalln("Environment variable 'GITHUB_ACCESSS_TOKEN' must not be emtpy!")
+		glog.Fatalln("Environment variable 'GITHUB_ACCESSS_TOKEN' must not be emtpy!")
 	}
 	client := getClient(githubToken)
-
-	logger.Notice("Ready for action!")
 
 	controller := controller.New(client)
 	ctx := context.Background()
@@ -36,26 +28,26 @@ func main() {
 	for {
 		unreadNotifications, err := getUnreadNotifications(client, ctx)
 		if err != nil {
-			log.Printf("Error getting unread notifications: %v", err)
+			glog.Errorf("Error getting unread notifications: %v", err)
 			continue
 		}
 
-		logger.Infof("Got %d notifications!", len(unreadNotifications))
+		glog.V(6).Infof("Got %d notifications!", len(unreadNotifications))
 		for _, unreadNotification := range unreadNotifications {
 			if serializedMsg, err := json.Marshal(unreadNotification); err == nil {
-				logger.Infof("Serialized notification:\n---\n%s\n---\n", string(serializedMsg))
+				glog.V(6).Infof("Serialized notification:\n---\n%s\n---\n", string(serializedMsg))
 			} else {
-				logger.Infof("Failed to serialize message: %v", err)
+				glog.Errorf("Failed to serialize message: %v", err)
 			}
 			if err := controller.HandleNotification(unreadNotification); err != nil {
-				logger.Infof("Failed to handle notification: %v", err)
+				glog.Errorf("Failed to handle notification: %v", err)
 			}
 		}
 
 		//TODO: only mark processed notifications as read
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
-		logger.Info("Sleeping ...")
+		glog.V(7).Info("sleeping...")
 		time.Sleep(15 * time.Second)
 	}
 }

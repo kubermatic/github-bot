@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/google/go-github/github"
 )
 
@@ -26,7 +26,7 @@ func New(client *github.Client) *Controller {
 
 func (c *Controller) HandleNotification(notification *github.Notification) error {
 	if *notification.Subject.Type != "PullRequest" {
-		log.Println("Dropping message because its not a PR...")
+		glog.V(6).Infoln("Dropping message because its not a PR...")
 		return nil
 	}
 
@@ -54,19 +54,18 @@ func (c *Controller) HandleNotification(notification *github.Notification) error
 		if err != nil {
 			return err
 		}
-		log.Printf("Got message body: %s", body)
+		glog.V(6).Infof("Got message body: %s", body)
 
 		if err := c.syncLabels(ctx, *repo, prNumber, body); err != nil {
 			return fmt.Errorf("failed to sync labels: %v", err)
 		}
 	}
 
-	log.Printf("notificationRepo:\n---\n%v\n", *notification.Repository)
 	if err := c.syncCherryPicks(ctx, *repo, prNumber); err != nil {
 		return fmt.Errorf("failed to sync cherry picks: %v", err)
 	}
 
-	log.Println("Successfully finished processing Notification")
+	glog.V(6).Infoln("Successfully finished processing notifications")
 	return nil
 }
 

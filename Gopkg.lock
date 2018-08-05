@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:e2b86e41f3d669fc36b50d31d32d22c8ac656c75aa5ea89717ce7177e134ff2a"
+  name = "github.com/golang/glog"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+
+[[projects]]
   digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -24,14 +32,6 @@
   packages = ["query"]
   pruneopts = "NUT"
   revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
-
-[[projects]]
-  digest = "1:797acf41ee0e3b0ac7077b07ccde71ffdee36b3c8636eccf1a4de7a1d199d253"
-  name = "github.com/op/go-logging"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "b2cb9fa56473e98db8caba80237377e83fe44db5"
-  version = "v1"
 
 [[projects]]
   branch = "master"
@@ -75,8 +75,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/golang/glog",
     "github.com/google/go-github/github",
-    "github.com/op/go-logging",
     "golang.org/x/oauth2",
   ]
   solver-name = "gps-cdcl"

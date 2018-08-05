@@ -3,10 +3,11 @@ package git
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 const (
@@ -64,7 +65,7 @@ func executeCommand(command string) error {
 		args = commandSlice[1:]
 	}
 
-	log.Printf("Executing command %s", command)
+	glog.V(6).Infof("Executing command %s", command)
 	if out, err := exec.Command(commandSlice[0], args...).CombinedOutput(); err != nil {
 		return fmt.Errorf("error executing command %s: out=%s, err=%v", command, string(out), err)
 	}

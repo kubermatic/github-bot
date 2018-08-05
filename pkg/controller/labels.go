@@ -3,8 +3,8 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/golang/glog"
 	"github.com/google/go-github/github"
 )
 
@@ -23,7 +23,7 @@ func (c *Controller) syncLabels(ctx context.Context, repo github.Repository, id 
 			if err != nil {
 				return fmt.Errorf("failed to add label %s on issue %s#%v: %v", desiredLabel, repo.GetURL(), id, err)
 			}
-			log.Printf("Successfully added label %s on issue %s#%v", desiredLabel, repo.GetURL(), id)
+			glog.V(6).Infof("Successfully added label %s on issue %s#%v", desiredLabel, repo.GetURL(), id)
 			currentLabels = newLabels
 		}
 	}
