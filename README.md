@@ -1,43 +1,29 @@
-# cherry-pick-bot
+# github-bot
 
-A bot to help you cherry-pick PRs that are ready to merge but need a rebase.
+Based on [adtac/cherry-pick-bot](https://github.com/adtac/cherry-pick-bot)
+
+A bot to improve the GH experience, currently it can:
+
+* Cherry-Pick PRs
+
+## Setup
+
+* Create a Github user
+* Subscribe the user to the repositories you want the bot to work on
+* Configure the Github user to get notifications via Web instead of Mail (`Personal Settings` -> `Notifications`)
+* Create an access token for the Github user via `Personal Settings` -> `Developer Settings` -> `Personal access tokens`
+* Export the token: `export GITHUB_ACCESS_TOKEN=my-token`
+* Run the bot: `./hack/run-bot.sh`
 
 ### Usage
 
-To cherry a pick a PR, just comment `@cherry-pick-bot` on the PR. You need to
-have a valid and public email address for this to work.
+* Comment on a pr with `/cherry-pick target-branch`, this will make the bot add a `cherry-pick/target-branch` label
+* Merge the pr. This will make the bot create a cherry-pick PR and report the status of that as comment onto the
+  original PR
 
-If you want to rebase an already-cherry-picked PR, simply close that one and
-cherry-pick it again (by commenting `@cherry-pick-bot` on the cherry-picked PR).
+Caveats:
 
-### Dependencies
-
-Dependencies: [`oauth2`](https://godoc.org/golang.org/x/oauth2), [`go-github`](https://godoc.org/github.com/google/go-github/github), and [`context`](https://godoc.org/golang.org/x/net/context). To install these:
-
-```bash
-$ go get -u golang.org/x/oauth2
-$ go get -u github.com/google/go-github
-$ go get -u golang.org/x/net/context
-```
-
-### Running
-
-You can set the config values in `src/config/config.go`. To start the server:
-
-```bash
-$ go build cherry_pick_bot.go
-$ ./cherry_pick_bot
-```
-
-Alternatively you can also set the following environment variables:
-
-```bash
-$ export GITHUB_ACCESS_TOKEN=access_token_goes_here
-$ export PRIVATE_KEY=/path/to/ssh/key
-$ export GITHUB_EMAIL=email@example.com
-$ # and then start the server
-$ ./cherry_pick_bot
-```
+* This currently only works with PRs from the same repo, not with forks
 
 ### License
 
