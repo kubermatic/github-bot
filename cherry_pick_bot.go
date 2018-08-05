@@ -33,10 +33,11 @@ func main() {
 	controller := controller.New(client)
 	ctx := context.Background()
 
-	for true {
+	for {
 		unreadNotifications, err := getUnreadNotifications(client, ctx)
 		if err != nil {
-			die(fmt.Errorf("error while getting unread notifications: %v", err))
+			log.Printf("Error getting unread notifications: %v", err)
+			continue
 		}
 
 		logger.Infof("Got %d notifications!", len(unreadNotifications))
