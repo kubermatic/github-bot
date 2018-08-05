@@ -33,7 +33,7 @@ func (c *Controller) syncLabels(ctx context.Context, repo github.Repository, id 
 func getLabelsToEnsureFromMessage(message string) []string {
 	var labels []string
 	if cherryPickCommandTarget := getCommandTarget(message, cherryPickCommandName); cherryPickCommandTarget != nil {
-		labels = append(labels, fmt.Sprintf("cherry-pick/%s", *cherryPickCommandTarget))
+		labels = append(labels, fmt.Sprintf("%s/%s", cherryPickLabelPrefix, *cherryPickCommandTarget))
 	}
 
 	return labels

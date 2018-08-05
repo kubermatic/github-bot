@@ -13,6 +13,7 @@ import (
 
 const (
 	cherryPickCommandName = "/cherry-pick"
+	cherryPickLabelPrefix = "cherry-pick"
 )
 
 type Controller struct {
@@ -75,4 +76,10 @@ func getIDFromUrl(commentUrl string) (int, error) {
 	commentURLSplitted := strings.Split(commentUrl, "/")
 	commentIDAsString := commentURLSplitted[len(commentURLSplitted)-1]
 	return strconv.Atoi(commentIDAsString)
+}
+
+func (c *Controller) writeMessageToIssue(ctx context.Context, repo github.Repository, id int, message string) error {
+	issueComment := &github.IssueComment{Body: &message}
+	_, _, err := c.client.Issues.CreateComment(ctx, repo.GetOwner().GetLogin(), repo.GetName(), id, issueComment)
+	return err
 }
