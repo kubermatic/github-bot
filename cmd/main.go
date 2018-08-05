@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -16,6 +17,7 @@ import (
 )
 
 func main() {
+	flag.Parse()
 	githubToken := os.Getenv("GITHUB_ACCESS_TOKEN")
 	if githubToken == "" {
 		glog.Fatalln("Environment variable 'GITHUB_ACCESSS_TOKEN' must not be emtpy!")
