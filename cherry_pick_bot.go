@@ -56,13 +56,13 @@ func main() {
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
 		logger.Info("Sleeping ...")
-		time.Sleep(time.Duration(conf.SleepTime.Nanoseconds()))
+		time.Sleep(15 * time.Second)
 	}
 }
 
 func getClient(githubToken string) *github.Client {
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: conf.AccessToken},
+		&oauth2.Token{AccessToken: githubToken},
 	)
 	tc := oauth2.NewClient(context.Background(), ts)
 	return github.NewClient(tc)
