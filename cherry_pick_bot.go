@@ -66,3 +66,22 @@ func getClient(githubToken string) *github.Client {
 	tc := oauth2.NewClient(context.Background(), ts)
 	return github.NewClient(tc)
 }
+
+func getUnreadNotifications(client *github.Client, ctx context.Context) ([]*github.Notification, error) {
+	notifications, resp, err := client.Activity.ListNotifications(
+		ctx, &github.NotificationListOptions{All: true})
+
+	if err != nil {
+		return nil, err
+	} else if s := resp.Response.StatusCode; s != 200 {
+		return nil, fmt.Errorf("response status code is %d", s)
+	}
+
+	unreadNotifications := make([]*github.Notification, 0)
+	for _, notification := range notifications {
+		if notification.GetUnread() {
+			unreadNotifications = append(unreadNotifications, notification)
+		}
+	}
+	return unreadNotifications, nil
+}
