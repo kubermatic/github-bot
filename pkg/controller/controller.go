@@ -38,22 +38,31 @@ func (c *Controller) HandleNotification(notification *github.Notification) error
 		return fmt.Errorf("failed to extract pr number from url: %v", err)
 	}
 
+	// We have to fetch the repository because the repository struct in notification.Repository
+	// does not contain any clone url
+	repo, _, err := c.client.Repositories.Get(ctx,
+		notification.Repository.GetOwner().GetLogin(),
+		notification.Repository.GetName())
+	if err != nil {
+		return fmt.Errorf("failed to fetch repo: %v", err)
+	}
 	latestCommentURL := notification.Subject.GetLatestCommentURL()
 	// Notification caused by a comment by someone else are only distinguishible from
 	// other kinds of notification by their latestCommentURL pointing to a comment and not to the PR/Issue
 	if strings.Contains(latestCommentURL, "issues/comments") {
-		body, err := c.getComment(ctx, *notification.Repository, notification.Subject.GetLatestCommentURL())
+		body, err := c.getComment(ctx, *repo, notification.Subject.GetLatestCommentURL())
 		if err != nil {
 			return err
 		}
 		log.Printf("Got message body: %s", body)
 
-		if err := c.syncLabels(ctx, *notification.Repository, prNumber, body); err != nil {
+		if err := c.syncLabels(ctx, *repo, prNumber, body); err != nil {
 			return fmt.Errorf("failed to sync labels: %v", err)
 		}
 	}
 
-	if err := c.syncCherryPicks(ctx, *notification.Repository, prNumber); err != nil {
+	log.Printf("notificationRepo:\n---\n%v\n", *notification.Repository)
+	if err := c.syncCherryPicks(ctx, *repo, prNumber); err != nil {
 		return fmt.Errorf("failed to sync cherry picks: %v", err)
 	}
 

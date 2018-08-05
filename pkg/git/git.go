@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -20,26 +21,50 @@ func PushCherryPick(repoURL, branchName, commitSHA string) (string, error) {
 		os.RemoveAll(tempDir)
 	}()
 
-	if out, err := exec.Command("git", "clone", repoURL, tempDir).CombinedOutput(); err != nil {
-		return "", fmt.Errorf("failed to clone: output=%s, err=%v", string(out), err)
+	if err := executeCommand(fmt.Sprintf("git clone %s %s", repoURL, tempDir)); err != nil {
+		return "", getRedactedError(err, tempDir)
 	}
 
-	if out, err := exec.Command("git", "-C", tempDir, "checkout", branchName).CombinedOutput(); err != nil {
-		return "", fmt.Errorf("failed to checkout branch %s: output=%s, err=%v", branchName, string(out), err)
+	if err := executeCommand(fmt.Sprintf("git -C %s checkout %s", tempDir, branchName)); err != nil {
+		return "", getRedactedError(err, tempDir)
 	}
 
 	newBranchName := fmt.Sprintf("%s-cherry-pick-%s", branchName, commitSHA)
-	if out, err := exec.Command("git", "-C", tempDir, "checkout", "-b", newBranchName).CombinedOutput(); err != nil {
-		return "", fmt.Errorf("failed to create branch %s: out=%s, err=%v", newBranchName, string(out), err)
+	if err := executeCommand(fmt.Sprintf("git -C %s checkout -b %s", tempDir, newBranchName)); err != nil {
+		return "", getRedactedError(err, tempDir)
 	}
 
-	if out, err := exec.Command("git", "-C", tempDir, "cherry-pick", commitSHA).CombinedOutput(); err != nil {
-		return "", fmt.Errorf("failed to cherry-pick commit %s: out=%s, err=%v", commitSHA, string(out), err)
+	if err := executeCommand(fmt.Sprintf("git -C %s cherry-pick %s", tempDir, commitSHA)); err != nil {
+		return "", getRedactedError(err, tempDir)
 	}
 
-	if out, err := exec.Command("git", "-C", tempDir, "push", "origin", newBranchName).CombinedOutput(); err != nil {
-		return "", fmt.Errorf("failed to push to branch %s; out=%s, err=%v", newBranchName, string(out), err)
+	if err := executeCommand(fmt.Sprintf("git -C %s push origin %s", tempDir, newBranchName)); err != nil {
+		return "", getRedactedError(err, tempDir)
 	}
 
 	return newBranchName, nil
+}
+
+func getRedactedError(err error, toBeRedacted ...string) error {
+	result := err.Error()
+	for _, toBeRedactedString := range toBeRedacted {
+		result = strings.Replace(result, toBeRedactedString, "REDACTED", -1)
+	}
+	return fmt.Errorf(result)
+}
+
+func executeCommand(command string) error {
+	commandSlice := strings.Fields(command)
+	if len(commandSlice) < 1 {
+		return fmt.Errorf("command must not be empty!")
+	}
+	var args []string
+	if len(commandSlice) > 1 {
+		args = commandSlice[1:]
+	}
+	if out, err := exec.Command(commandSlice[0], args...).CombinedOutput(); err != nil {
+		return fmt.Errorf("error executing command %s: out=%s, err=%v", command, string(out), err)
+	}
+
+	return nil
 }
