@@ -1,13 +1,19 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
+	"os"
 	"time"
+
+	"golang.org/x/oauth2"
 
 	"github.com/adtac/cherry-pick-bot/pkg/controller"
 
+	"github.com/google/go-github/github"
 	"github.com/op/go-logging"
 )
 
@@ -16,17 +22,16 @@ var configPath = flag.String("config", "config.toml", "Path for the config file"
 var logger = logging.MustGetLogger("cherry-pick-bot")
 
 func main() {
-	err := loadConfig(*configPath)
-	if err != nil {
-		die(fmt.Errorf("error while reading configuration file: %v", err))
+	githubToken := os.Getenv("GITHUB_ACCESS_TOKEN")
+	if githubToken == "" {
+		log.Fatalln("Environment variable 'GITHUB_ACCESSS_TOKEN' must not be emtpy!")
 	}
-
-	loadEnvironment()
-	ctx, client := authenticate()
+	client := getClient(githubToken)
 
 	logger.Notice("Ready for action!")
 
 	controller := controller.New(client)
+	ctx := context.Background()
 
 	for true {
 		unreadNotifications, err := getUnreadNotifications(client, ctx)
@@ -52,4 +57,12 @@ func main() {
 		logger.Info("Sleeping ...")
 		time.Sleep(time.Duration(conf.SleepTime.Nanoseconds()))
 	}
+}
+
+func getClient(githubToken string) *github.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: conf.AccessToken},
+	)
+	tc := oauth2.NewClient(context.Background(), ts)
+	return github.NewClient(tc)
 }
