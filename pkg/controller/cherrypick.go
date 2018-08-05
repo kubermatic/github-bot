@@ -41,12 +41,13 @@ func (c *Controller) syncCherryPicks(ctx context.Context, repo github.Repository
 
 func (c *Controller) createCherryPick(ctx context.Context, repo github.Repository, pr github.PullRequest, label string) error {
 	splittedLabel := strings.Split(label, "/")
-	if len(splittedLabel) != 2 {
+	if len(splittedLabel) < 2 {
 		return fmt.Errorf("label %s is not of format 'cherry-pick/<branchname>'!", label)
 	}
-	headBanch, err := git.PushCherryPick(repo.GetSSHURL(), splittedLabel[1], pr.GetMergeCommitSHA())
+	baseBranch := strings.Join(splittedLabel[1:], "/")
+	headBanch, err := git.PushCherryPick(repo.GetSSHURL(), baseBranch, pr.GetMergeCommitSHA())
 	if err != nil {
-		errWriteMessage := c.writeMessageToIssue(ctx, repo, int(pr.GetNumber()), fmt.Sprintf("Error creating cherry-pick due to: `%v`", err))
+		errWriteMessage := c.writeMessageToIssue(ctx, repo, pr.GetNumber(), fmt.Sprintf("Error creating cherry-pick due to: `%v`", err))
 		if errWriteMessage != nil {
 			return fmt.Errorf("error creating cherry-pick: %v, also writing an error message to github failed: %v",
 				err, errWriteMessage)
@@ -54,26 +55,26 @@ func (c *Controller) createCherryPick(ctx context.Context, repo github.Repositor
 		return fmt.Errorf("error creating cherry-pick: %v", err)
 	}
 
-	title := fmt.Sprintf("Automated cherry-pick of %s onto %s", pr.GetTitle(), splittedLabel[1])
-	body := fmt.Sprintf("Automated cherry-pick of %s\n----\n%s", pr.GetTitle(), pr.GetBody())
+	title := fmt.Sprintf("Automated cherry-pick of %s onto %s", pr.GetTitle(), baseBranch)
+	body := fmt.Sprintf("Automated cherry-pick of %s\n\n%s", pr.GetTitle(), pr.GetBody())
 	pullRequest := &github.NewPullRequest{
-		Base:  &splittedLabel[1],
+		Base:  &baseBranch,
 		Head:  &headBanch,
 		Title: &title,
 		Body:  &body,
 	}
 
-	_, _, err = c.client.PullRequests.Create(ctx, repo.GetOwner().GetLogin(), repo.GetName(), pullRequest)
+	newPR, _, err := c.client.PullRequests.Create(ctx, repo.GetOwner().GetLogin(), repo.GetName(), pullRequest)
 	if err != nil {
-		errWriteMessage := c.writeMessageToIssue(ctx, repo, int(pr.GetNumber()), fmt.Sprintf("Error creating pull request: %v", err))
+		errWriteMessage := c.writeMessageToIssue(ctx, repo, pr.GetNumber(), fmt.Sprintf("Error creating pull request: %v", err))
 		if errWriteMessage != nil {
 			return fmt.Errorf("error creating pull request: %v, also writing an error message to github failed: %v", err, errWriteMessage)
 		}
 		return fmt.Errorf("error creating pull request: %v", err)
 	}
+	if err = c.writeMessageToIssue(ctx, repo, pr.GetNumber(), fmt.Sprintf("Created #%v to cherry-pick this pr onto %s", newPR.GetNumber(), baseBranch)); err != nil {
+		return fmt.Errorf("failed to create success message after successfully creating PR: %v", err)
+	}
 
-	log.Println("Successfully finished creating PR")
 	return nil
 }
-
-//Create(ctx context.Context, owner string, repo string, pull *NewPullRequest) (*PullRequest, *Response, error)

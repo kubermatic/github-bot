@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -62,6 +63,8 @@ func executeCommand(command string) error {
 	if len(commandSlice) > 1 {
 		args = commandSlice[1:]
 	}
+
+	log.Printf("Executing command %s", command)
 	if out, err := exec.Command(commandSlice[0], args...).CombinedOutput(); err != nil {
 		return fmt.Errorf("error executing command %s: out=%s, err=%v", command, string(out), err)
 	}
