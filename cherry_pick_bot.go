@@ -41,14 +41,15 @@ func main() {
 			} else {
 				logger.Infof("Failed to serialize message: %v", err)
 			}
+			if err := controller.HandleNotification(unreadNotification); err != nil {
+				logger.Infof("Failed to handle notification: %v", err)
+			}
 		}
 
+		//TODO: only mark processed notifications as read
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
 		for _, notification := range unreadNotifications {
-			if err := controller.HandleNotification(notification); err != nil {
-				logger.Infof("Failed to handle notification: %v", err)
-			}
 			login, project, prId, err := extractNotification(notification)
 			if err != nil {
 				die(fmt.Errorf("error while extracting notification data: %v", err))

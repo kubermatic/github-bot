@@ -30,22 +30,34 @@ func (c *Controller) HandleNotification(notification *github.Notification) error
 		return nil
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancelFunc()
-
-	body, err := c.getComment(ctx, *notification.Repository, notification.Subject.GetLatestCommentURL())
-	if err != nil {
-		return err
-	}
-	log.Printf("Got message body: %s", body)
 
 	prNumber, err := getIDFromUrl(notification.Subject.GetURL())
 	if err != nil {
 		return fmt.Errorf("failed to extract pr number from url: %v", err)
 	}
-	if err := c.syncLabels(ctx, *notification.Repository, prNumber, body); err != nil {
-		return fmt.Errorf("failed to sync labels: %v", err)
+
+	latestCommentURL := notification.Subject.GetLatestCommentURL()
+	// Notification caused by a comment by someone else are only distinguishible from
+	// other kinds of notification by their latestCommentURL pointing to a comment and not to the PR/Issue
+	if strings.Contains(latestCommentURL, "issues/comments") {
+		body, err := c.getComment(ctx, *notification.Repository, notification.Subject.GetLatestCommentURL())
+		if err != nil {
+			return err
+		}
+		log.Printf("Got message body: %s", body)
+
+		if err := c.syncLabels(ctx, *notification.Repository, prNumber, body); err != nil {
+			return fmt.Errorf("failed to sync labels: %v", err)
+		}
 	}
+
+	if err := c.syncCherryPicks(ctx, *notification.Repository, prNumber); err != nil {
+		return fmt.Errorf("failed to sync cherry picks: %v", err)
+	}
+
+	log.Println("Successfully finished processing Notification")
 	return nil
 }
 

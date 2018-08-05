@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/adtac/cherry-pick-bot/pkg/git"
@@ -16,6 +17,7 @@ func (c *Controller) syncCherryPicks(ctx context.Context, repo github.Repository
 		return fmt.Errorf("failed to fetch pr: %v", err)
 	}
 	if !pr.GetMerged() {
+		log.Printf("PR not merged, nothing to do...")
 		return nil
 	}
 	labels, _, err := c.client.Issues.ListLabelsByIssue(ctx, repo.GetOwner().GetLogin(), repo.GetName(), id, nil)
@@ -24,13 +26,16 @@ func (c *Controller) syncCherryPicks(ctx context.Context, repo github.Repository
 	}
 
 	for _, label := range labels {
-		if strings.HasPrefix(label.String(), cherryPickLabelPrefix) {
-			if err := c.createCherryPick(ctx, repo, *pr, label.String()); err != nil {
+		log.Printf("Checking if label %s requires action", label.GetName())
+		if strings.HasPrefix(label.GetName(), cherryPickLabelPrefix) {
+			log.Printf("Creating cherry-pick for label %s", label.String())
+			if err := c.createCherryPick(ctx, repo, *pr, label.GetName()); err != nil {
 				return fmt.Errorf("failed to create cherry pick: %v", err)
 			}
 		}
 	}
 
+	log.Println("Successfully finished processing cherry-picks")
 	return nil
 }
 
@@ -67,6 +72,7 @@ func (c *Controller) createCherryPick(ctx context.Context, repo github.Repositor
 		return fmt.Errorf("error creating pull request: %v", err)
 	}
 
+	log.Println("Successfully finished creating PR")
 	return nil
 }
 
