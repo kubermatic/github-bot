@@ -44,9 +44,9 @@ func (c *Controller) createCherryPick(ctx context.Context, repo github.Repositor
 	if len(splittedLabel) != 2 {
 		return fmt.Errorf("label %s is not of format 'cherry-pick/<branchname>'!", label)
 	}
-	headBanch, err := git.PushCherryPick(repo.GetURL(), splittedLabel[1], pr.GetMergeCommitSHA())
+	headBanch, err := git.PushCherryPick(repo.GetSSHURL(), splittedLabel[1], pr.GetMergeCommitSHA())
 	if err != nil {
-		errWriteMessage := c.writeMessageToIssue(ctx, repo, int(pr.GetID()), fmt.Sprintf("Error creating cherry-pick: %v", err))
+		errWriteMessage := c.writeMessageToIssue(ctx, repo, int(pr.GetNumber()), fmt.Sprintf("Error creating cherry-pick due to: `%v`", err))
 		if errWriteMessage != nil {
 			return fmt.Errorf("error creating cherry-pick: %v, also writing an error message to github failed: %v",
 				err, errWriteMessage)
@@ -65,7 +65,7 @@ func (c *Controller) createCherryPick(ctx context.Context, repo github.Repositor
 
 	_, _, err = c.client.PullRequests.Create(ctx, repo.GetOwner().GetLogin(), repo.GetName(), pullRequest)
 	if err != nil {
-		errWriteMessage := c.writeMessageToIssue(ctx, repo, int(pr.GetID()), fmt.Sprintf("Error creating pull request: %v", err))
+		errWriteMessage := c.writeMessageToIssue(ctx, repo, int(pr.GetNumber()), fmt.Sprintf("Error creating pull request: %v", err))
 		if errWriteMessage != nil {
 			return fmt.Errorf("error creating pull request: %v, also writing an error message to github failed: %v", err, errWriteMessage)
 		}
