@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: github-bot
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-bot
+  namespace: github-bot
+stringData:
+  GITHUB_ACCESS_TOKEN: << GITHUB_TOKEN >>
+  SSH_KEY: << SSH_KEY >>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: github-bot
+  name: github-bot
+  namespace: github-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: github-bot
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: github-bot
+    spec:
+      containers:
+      - image: docker.io/alvaroaleman/github-bot:3
+        name: github-bot
+        command:
+          - /usr/local/bin/github-bot
+          - -logtostderr
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        env:
+          - name: GITHUB_ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-bot
+                key: GITHUB_ACCESS_TOKEN
+        volumeMounts:
+        - name: github-bot
+          mountPath: /root/.ssh/id_rsa
+          readOnly: true
+          subPath: SSH_KEY
+      volumes:
+      - name: github-bot
+        secret:
+          secretName: github-bot
+          defaultMode: 511
+          items:
+            - key: SSH_KEY
+              path: SSH_KEY

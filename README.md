@@ -13,7 +13,9 @@ A bot to improve the GH experience, currently it can:
 * Configure the Github user to get notifications via Web instead of Mail (`Personal Settings` -> `Notifications`)
 * Create an access token for the Github user via `Personal Settings` -> `Developer Settings` -> `Personal access tokens`
 * Export the token: `export GITHUB_ACCESS_TOKEN=my-token`
-* Run the bot: `./hack/run-bot.sh`
+* Run the bot locally via `./hack/run-bot.sh`
+* Deploy the bot into Kubernetes by entering adding the required secrets into `manifests/kubernetes.yaml` and then
+  just execute `kubectl apply -f manifests/kubernetes.yaml`
 
 ### Usage
 

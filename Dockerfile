@@ -2,13 +2,11 @@ FROM alpine:3.8
 
 RUN \
   apk add -U openssh-client git && \
-  adduser -S github-bot && \
-  mkdir -p /home/github-bot/.ssh && \
-  ssh-keyscan github.com >> /home/github-bot/.ssh/known_hosts && \
-  chown -R github-bot /home/github-bot && \
-  chmod 0700 /home/github-bot/.ssh && \
-  chmod 0600 /home/github-bot/.ssh/known_hosts
-
-USER github-bot
+  mkdir -p $HOME/.ssh && \
+  ssh-keyscan github.com >> $HOME/.ssh/known_hosts && \
+  chmod 0700 $HOME/.ssh && \
+  chmod 0600 $HOME/.ssh/known_hosts
 
 COPY github-bot /usr/local/bin/github-bot
+
+CMD ["/usr/local/bin/github-bot", "-logtostderr", "-v=6"]

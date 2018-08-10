@@ -4,5 +4,5 @@ set -e
 
 cd $(dirname $0)/..
 
-make cherry_pick_bot
-./cherry_pick_bot -logtostderr -v=6
+make github-bot
+./github-bot -logtostderr -v=6
