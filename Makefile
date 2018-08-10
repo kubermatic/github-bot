@@ -1,6 +1,11 @@
 export CGO_ENABLED := 0
+export IMAGE_TAG := docker.io/alvaroaleman/github-bot:1
 
-cherry_pick_bot: $(shell find . -name '*.go')
+github-bot: $(shell find . -name '*.go')
 	go build -v \
 		-ldflags '-s -w' \
-		-o cherry_pick_bot ./cmd
+		-o github-bot ./cmd
+
+docker-image: github-bot
+	docker build -t $(IMAGE_TAG) .
+	docker push $(IMAGE_TAG)

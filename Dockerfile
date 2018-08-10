@@ -1,10 +1,14 @@
-FROM golang:latest
-MAINTAINER Kaisar Arkhan <yukinagato@protonmail.com>
+FROM alpine:3.8
 
-COPY . /go/src/cherry-pick-bot
-WORKDIR /go/src/cherry-pick-bot
+RUN \
+  apk add -U openssh-client git && \
+  adduser -S github-bot && \
+  mkdir -p /home/github-bot/.ssh && \
+  ssh-keyscan github.com >> /home/github-bot/.ssh/known_hosts && \
+  chown -R github-bot /home/github-bot && \
+  chmod 0700 /home/github-bot/.ssh && \
+  chmod 0600 /home/github-bot/.ssh/known_hosts
 
-RUN go get -d -v
-RUN go install -v
+USER github-bot
 
-CMD ["/go/src/cherry-pick-bot/docker/run.sh"]
+COPY github-bot /usr/local/bin/github-bot
