@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/adtac/cherry-pick-bot/pkg/controller"
+	"github.com/kubermatic/github-bot/pkg/controller"
 
 	"github.com/golang/glog"
 	"github.com/google/go-github/github"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/adtac/cherry-pick-bot/pkg/git"
+	"github.com/kubermatic/github-bot/pkg/git"
 
 	"github.com/golang/glog"
 	"github.com/google/go-github/github"
