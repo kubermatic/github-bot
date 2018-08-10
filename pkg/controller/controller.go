@@ -54,7 +54,7 @@ func (c *Controller) HandleNotification(notification *github.Notification) error
 		if err != nil {
 			return err
 		}
-		glog.V(6).Infof("Got message body: %s", body)
+		glog.V(7).Infof("Got message body: %s", body)
 
 		if err := c.syncLabels(ctx, *repo, prNumber, body); err != nil {
 			return fmt.Errorf("failed to sync labels: %v", err)

@@ -1,5 +1,5 @@
 export CGO_ENABLED := 0
-export IMAGE_TAG := docker.io/alvaroaleman/github-bot:3
+export IMAGE_TAG := docker.io/alvaroaleman/github-bot:4
 
 github-bot: $(shell find . -name '*.go')
 	go build -v \
