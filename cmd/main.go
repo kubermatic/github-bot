@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -16,19 +17,23 @@ import (
 	"github.com/google/go-github/github"
 )
 
+const (
+	sleepTime = 15 * time.Second
+)
+
 func main() {
 	flag.Parse()
 	githubToken := os.Getenv("GITHUB_ACCESS_TOKEN")
 	if githubToken == "" {
 		glog.Fatalln("Environment variable 'GITHUB_ACCESSS_TOKEN' must not be emtpy!")
 	}
-	client := getClient(githubToken)
+	ctx := context.Background()
+	client := getClient(ctx, githubToken)
 
 	controller := controller.New(client)
-	ctx := context.Background()
 
 	for {
-		unreadNotifications, err := getUnreadNotifications(client, ctx)
+		unreadNotifications, err := getUnreadNotifications(ctx, client)
 		if err != nil {
 			glog.Errorf("Error getting unread notifications: %v", err)
 			continue
@@ -50,25 +55,24 @@ func main() {
 		client.Activity.MarkNotificationsRead(ctx, time.Now())
 
 		glog.V(7).Info("sleeping...")
-		time.Sleep(15 * time.Second)
+		time.Sleep(sleepTime)
 	}
 }
 
-func getClient(githubToken string) *github.Client {
+func getClient(ctx context.Context, githubToken string) *github.Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: githubToken},
 	)
-	tc := oauth2.NewClient(context.Background(), ts)
-	return github.NewClient(tc)
+	return github.NewClient(oauth2.NewClient(ctx, ts))
 }
 
-func getUnreadNotifications(client *github.Client, ctx context.Context) ([]*github.Notification, error) {
+func getUnreadNotifications(ctx context.Context, client *github.Client) ([]*github.Notification, error) {
 	notifications, resp, err := client.Activity.ListNotifications(
 		ctx, &github.NotificationListOptions{All: true})
 
 	if err != nil {
 		return nil, err
-	} else if s := resp.Response.StatusCode; s != 200 {
+	} else if s := resp.Response.StatusCode; s != http.StatusOK {
 		return nil, fmt.Errorf("response status code is %d", s)
 	}
 
