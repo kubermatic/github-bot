@@ -14,6 +14,8 @@ import (
 const (
 	cherryPickCommandName = "/cherry-pick"
 	cherryPickLabelPrefix = "cherry-pick"
+
+	reqTimeout = 120 * time.Second
 )
 
 type Controller struct {
@@ -30,7 +32,7 @@ func (c *Controller) HandleNotification(notification *github.Notification) error
 		return nil
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 120*time.Second)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancelFunc()
 
 	prNumber, err := getIDFromUrl(notification.Subject.GetURL())
