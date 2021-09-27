@@ -1,5 +1,9 @@
 # github-bot
 
+# DEPRECATED
+
+This has been completely replaced by Prow and it's Cherry Pick ability.
+
 Based on [adtac/cherry-pick-bot](https://github.com/adtac/cherry-pick-bot)
 
 A bot to improve the GH experience, currently it can:
